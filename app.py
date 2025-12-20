@@ -411,8 +411,9 @@ for key, config in EMAIL_CONFIGS.items():
 print(f"Valid email configurations: {valid_configs}")
 
 # Only require default password if no other configs are valid
-if not valid_configs and not SENDER_PASSWORD:
-    raise ValueError('At least one email configuration must be complete (email + password)')
+if not valid_configs:
+    print("WARNING: No email configurations found with both email and password set.")
+    print("Check Azure App Service → Configuration → Application settings")
 
 # OAuth2 settings for Office365 (if needed)
 CLIENT_ID = os.getenv('AZURE_CLIENT_ID', '')
