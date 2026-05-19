@@ -26,21 +26,21 @@ import subprocess
 import time
 import logging
 from werkzeug.security import generate_password_hash, check_password_hash
-
-
+ 
+ 
 try:
     import dns.resolver
     DNS_AVAILABLE = True
 except ImportError:
     DNS_AVAILABLE = False
     print("Warning: dnspython not installed. DNS validation will be skipped.")
-
+ 
 # Load environment variables
 load_dotenv()
-
+ 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
+ 
 def close_existing_connections():
     """Close any existing database connections and handle journal files"""
     import os
@@ -63,7 +63,7 @@ def close_existing_connections():
     except Exception as e:
         print(f"Warning during connection cleanup: {e}")
         pass
-
+ 
 def decrypt_credential(encrypted_text):
     """Decrypt encrypted credentials"""
     try:
@@ -74,32 +74,32 @@ def decrypt_credential(encrypted_text):
     except Exception as e:
         print(f"Error decrypting credential: {e}")
         return None
-
+ 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
-
+ 
 # Public routes that don't require login
 PUBLIC_ROUTES = [
     'login', 'book_direct', 'track_email_open', 'track_pixel', 'track_open', 
     'track_click_open', 'test_pixel', 'bypass_warning'
 ]
-
+ 
 @app.route('/bypass-warning')
 def bypass_warning():
     """Direct bypass for ngrok warning page"""
     return '''<script>window.location.href = window.location.origin + '/?ngrok-skip-browser-warning=true';</script>'''
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
 @app.route('/')
 def index():
     """Main page with email sending dashboard"""
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     return render_template("index.html")
-
+ 
 # Complete ngrok warning bypass
 @app.before_request
 def before_request():
@@ -112,7 +112,7 @@ def before_request():
     # Add ngrok bypass headers to all requests
     request.environ['HTTP_NGROK_SKIP_BROWSER_WARNING'] = 'true'
     request.environ['HTTP_NGROK_SKIP_BROWSER_WARNING'] = 'any'
-
+ 
 @app.after_request
 def after_request(response):
     # Multiple bypass methods for ngrok warning
@@ -134,21 +134,21 @@ def after_request(response):
     response.headers['Expires'] = '0'
     
     return response
-
+ 
 # Use ngrok for external access - will be set dynamically
 app.config['PUBLIC_URL'] = os.getenv('PUBLIC_URL', 'http://localhost:8080')
 print(f"Initial URL: {app.config['PUBLIC_URL']}")
-
+ 
 def get_base_url():
     return app.config.get('PUBLIC_URL', 'http://localhost:5000')
-
+ 
 def make_request(url, method='GET', **kwargs):
     """Make HTTP request with custom User-Agent to bypass ngrok warnings"""
     headers = kwargs.get('headers', {})
     headers['User-Agent'] = 'GradientMIT-EmailTracker/1.0'
     kwargs['headers'] = headers
     return requests.request(method, url, **kwargs)
-
+ 
 # Initialize database
 def init_db():
     import time
@@ -333,7 +333,7 @@ def init_db():
     
     conn.commit()
     conn.close()
-
+ 
 # Check for running Python processes that might be holding the database
 try:
     import psutil
@@ -352,13 +352,13 @@ except ImportError:
     print("psutil not available, skipping process check")
 except Exception as e:
     print(f"Error checking processes: {e}")
-
+ 
 # Close any existing connections before initializing
 close_existing_connections()
 init_db()
-
+ 
 # --- SMTP Settings ---
-
+ 
 # Email configurations
 EMAIL_CONFIGS = {
     'office365': {
@@ -384,9 +384,41 @@ EMAIL_CONFIGS = {
         'password': os.getenv('GMAIL_PASS_2'),
         'name': 'Gmail - vishwasbs@gradientmitsolutions.com',
         'tls': True
+    },
+    'gmail3': {
+        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
+        'port': int(os.getenv('GMAIL_PORT', 587)),
+        'email': os.getenv('GMAIL_USER_3'),
+        'password': os.getenv('GMAIL_PASS_3'),
+        'name': 'Gmail - sonu.kumar@gradientm.com',
+        'tls': True
+    },
+    'gmail4': {
+        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
+        'port': int(os.getenv('GMAIL_PORT', 587)),
+        'email': os.getenv('GMAIL_USER_4'),
+        'password': os.getenv('GMAIL_PASS_4'),
+        'name': 'Gmail - Bhagyashree@gradientm.com',
+        'tls': True
+    },
+    'gmail5': {
+        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
+        'port': int(os.getenv('GMAIL_PORT', 587)),
+        'email': os.getenv('GMAIL_USER_5'),
+        'password': os.getenv('GMAIL_PASS_5'),
+        'name': 'Gmail - saket.kumar@gradientm.com',
+        'tls': True
+    },
+    'gmail6': {
+        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
+        'port': int(os.getenv('GMAIL_PORT', 587)),
+        'email': os.getenv('GMAIL_USER_6'),
+        'password': os.getenv('GMAIL_PASS_6'),
+        'name': 'Gmail - Danny.jayaraj@gradientm.com',
+        'tls': True
     }
 }
-
+ 
 # Debug: Print loaded configurations
 print("\n=== EMAIL CONFIGURATIONS ===")
 for key, config in EMAIL_CONFIGS.items():
@@ -395,35 +427,35 @@ for key, config in EMAIL_CONFIGS.items():
     password_status = 'SET' if password else 'NOT SET'
     print(f"{key}: {email} - Password: {password_status}")
 print("============================\n")
-
+ 
 # Default configuration (keep for backward compatibility)
 SMTP_SERVER = EMAIL_CONFIGS['office365']['server']
 SMTP_PORT = EMAIL_CONFIGS['office365']['port']
 SENDER_EMAIL = EMAIL_CONFIGS['office365']['email']
 SENDER_PASSWORD = EMAIL_CONFIGS['office365']['password']
-
+ 
 # Check if at least one email configuration is valid
 valid_configs = []
 for key, config in EMAIL_CONFIGS.items():
     if config.get('email') and config.get('password'):
         valid_configs.append(key)
-
+ 
 print(f"Valid email configurations: {valid_configs}")
-
+ 
 # Only require default password if no other configs are valid
 if not valid_configs:
     print("WARNING: No email configurations found with both email and password set.")
     print("Check Azure App Service → Configuration → Application settings")
-
+ 
 # OAuth2 settings for Office365 (if needed)
 CLIENT_ID = os.getenv('AZURE_CLIENT_ID', '')
 CLIENT_SECRET = os.getenv('AZURE_CLIENT_SECRET', '')
 TENANT_ID = os.getenv('AZURE_TENANT_ID', '')
-
+ 
 # Log SMTP configuration (without sensitive data)
 logging.info(f"Using SMTP Server: {SMTP_SERVER}:{SMTP_PORT}")
 logging.info(f"Using Email: {SENDER_EMAIL}")
-
+ 
 def get_oauth2_token():
     """Get OAuth2 access token for Office365"""
     if not all([CLIENT_ID, CLIENT_SECRET, TENANT_ID]):
@@ -445,12 +477,12 @@ def get_oauth2_token():
     except Exception as e:
         print(f"OAuth2 token error: {e}")
     return None
-
+ 
 def create_oauth2_string(email, access_token):
     """Create OAuth2 authentication string"""
     auth_string = f"user={email}\x01auth=Bearer {access_token}\x01\x01"
     return base64.b64encode(auth_string.encode()).decode()
-
+ 
 def try_smtp_connection():
     """Try different SMTP configurations to find working one"""
     for config in SMTP_CONFIGS:
@@ -467,21 +499,21 @@ def try_smtp_connection():
             print(f"FAILED: {config['server']}:{config['port']} - {e}")
             continue
     return None
-
+ 
 # --- No default BCC emails - all must be entered manually ---
-
-
+ 
+ 
 # --- Permanent logo file (put your company logo here) ---
 LOGO_PATH = os.path.join("static", "logo.png")
 os.makedirs("static", exist_ok=True)
-
-
+ 
+ 
 # --- Email Validation Functions ---
 def validate_email_format(email):
     """Validate email format using regex"""
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
-
+ 
 def check_domain_dns(domain):
     """Check if domain has valid MX records"""
     if not DNS_AVAILABLE:
@@ -491,7 +523,7 @@ def check_domain_dns(domain):
         return len(mx_records) > 0
     except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, Exception):
         return False
-
+ 
 def validate_email_deliverability(email):
     """Comprehensive email validation including DNS checks"""
     if not validate_email_format(email):
@@ -502,12 +534,12 @@ def validate_email_deliverability(email):
         return False, f"Domain '{domain}' does not exist or has no mail servers"
     
     return True, "Valid"
-
+ 
 # --- Send Email Function ---
 def generate_recipient_hash(email):
     """Generate unique hash for recipient"""
     return hashlib.sha256(f"{email}_{uuid.uuid4()}".encode()).hexdigest()[:16]
-
+ 
 def store_recipient_mapping(recipient_hash, email):
     """Store recipient hash to email mapping"""
     conn = sqlite3.connect('email_campaigns.db')
@@ -518,7 +550,7 @@ def store_recipient_mapping(recipient_hash, email):
     ''', (recipient_hash, email))
     conn.commit()
     conn.close()
-
+ 
 def send_email(receiver_email, subject, body, attachments=None, tracking_id=None, recipient_hash=None, include_logo=True, bcc_emails=None, email_config_key='office365'):
     server = None
     try:
@@ -547,6 +579,14 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
             display_name = "Sidharth Chettry"
         elif "vishwasbs" in sender_email:
             display_name = "Vishwas BS"
+        elif "sonu.kumar" in sender_email:
+            display_name = "Sonu Kumar"
+        elif "bhagyashree" in sender_email.lower():
+            display_name = "Bhagyashree"
+        elif "saket.kumar" in sender_email:
+            display_name = "Saket Kumar"
+        elif "danny.jayaraj" in sender_email.lower():
+            display_name = "Danny Jayaraj"
         else:
             display_name = sender_email.split('@')[0].title()
         
@@ -590,11 +630,11 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
         msg["Received-SPF"] = f"Pass ({sender_email.split('@')[1]}: domain of {sender_email} designates sending IP as permitted sender)"
         msg["X-MS-Exchange-Organization-InferenceClassification"] = "Focused"
         msg["X-MS-Exchange-Organization-MessageSource"] = "StoreDriver"
-
+ 
         # Alternative container
         alt = MIMEMultipart("alternative")
         msg.attach(alt)
-
+ 
         # HTML body with conditional logo and tracking pixel (only for primary recipient)
         base_url = get_base_url()
         # Only add tracking pixel for primary recipient, not BCC recipients
@@ -666,7 +706,7 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
         # Attach both plain text and HTML versions
         alt.attach(MIMEText(plain_body, "plain"))
         alt.attach(MIMEText(html_body, "html"))
-
+ 
         # Attach logo only if include_logo is True
         if include_logo and os.path.exists(LOGO_PATH):
             try:
@@ -679,7 +719,7 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
                 print(f"Warning: Could not attach logo: {logo_error}")
         elif include_logo:
             print(f"Warning: Logo not found at: {LOGO_PATH}")
-
+ 
         # Attach files if provided
         if attachments:
             for attachment in attachments:
@@ -697,7 +737,7 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
                         attachment.seek(0)  # Reset file pointer again
                     except Exception as attach_error:
                         print(f"Warning: Could not attach file {attachment.filename}: {attach_error}")
-
+ 
         # Send email
         logging.info(f"Connecting to SMTP server: {smtp_server}:{smtp_port}")
         server = smtplib.SMTP(smtp_server, smtp_port)
@@ -713,7 +753,7 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
         except smtplib.SMTPAuthenticationError as auth_error:
             print(f"DEBUG: SMTP Authentication FAILED for {sender_email}: {auth_error}")
             raise Exception(f"Authentication failed for {sender_email}: {auth_error}")
-
+ 
         # Send to primary recipient and BCC recipients
         recipients = [receiver_email]
         if final_bcc_emails:
@@ -754,8 +794,8 @@ def send_email(receiver_email, subject, body, attachments=None, tracking_id=None
                 server.quit()
             except:
                 pass
-
-
+ 
+ 
 # --- Routes ---
 def track_user_activity(action, details=""):
     """Track user activity for admin monitoring"""
@@ -789,11 +829,11 @@ def track_user_activity(action, details=""):
         conn.close()
     except Exception as e:
         print(f"Error tracking user activity: {e}")
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -862,7 +902,7 @@ def login():
         conn.close()
     
     return render_template("simple_login.html")
-
+ 
 @app.route("/logout")
 def logout():
     """Logout route to clear session and redirect to login"""
@@ -885,7 +925,7 @@ def logout():
     except Exception as e:
         print(f"Error in logout route: {e}")
         return redirect(url_for('login'))
-
+ 
 @app.route("/admin")
 def admin():
     """Admin dashboard to monitor user activity and campaigns"""
@@ -897,7 +937,7 @@ def admin():
     conn = sqlite3.connect('email_campaigns.db')
     c = conn.cursor()
     
-
+ 
     
     # Debug: Check if bcc_recipients column has data
     c.execute('SELECT COUNT(*) FROM email_logs WHERE bcc_recipients IS NOT NULL')
@@ -1015,7 +1055,7 @@ def admin():
                          all_users=all_users,
                          login_activity=login_activity,
                          bcc_stats=bcc_stats)
-
+ 
 @app.route("/approve_user/<username>")
 def approve_user(username):
     """Approve a pending user"""
@@ -1031,7 +1071,7 @@ def approve_user(username):
     
     flash(f"User '{username}' approved successfully!")
     return redirect(url_for('admin'))
-
+ 
 @app.route("/reject_user/<username>")
 def reject_user(username):
     """Reject a pending user"""
@@ -1046,7 +1086,7 @@ def reject_user(username):
     
     flash(f"User '{username}' rejected and removed!")
     return redirect(url_for('admin'))
-
+ 
 @app.route("/bulk_approve", methods=["POST"])
 def bulk_approve():
     """Bulk approve multiple users"""
@@ -1068,7 +1108,7 @@ def bulk_approve():
     
     flash(f"Approved {len(usernames)} users successfully!")
     return redirect(url_for('admin'))
-
+ 
 @app.route("/bulk_reject", methods=["POST"])
 def bulk_reject():
     """Bulk reject multiple users"""
@@ -1089,7 +1129,7 @@ def bulk_reject():
     
     flash(f"Rejected {len(usernames)} users successfully!")
     return redirect(url_for('admin'))
-
+ 
 @app.route("/change_user_role/<username>/<new_role>")
 def change_user_role(username, new_role):
     """Change user role (admin/user)"""
@@ -1108,7 +1148,7 @@ def change_user_role(username, new_role):
     
     flash(f"User '{username}' role changed to '{new_role}'")
     return redirect(url_for('admin'))
-
+ 
 @app.route("/user_activity_logs")
 def user_activity_logs():
     """View detailed user activity logs"""
@@ -1142,7 +1182,7 @@ def user_activity_logs():
                          page=page, 
                          per_page=per_page, 
                          total=total)
-
+ 
 @app.route("/send", methods=["POST"])
 def send():
     """Handle email sending from the main form"""
@@ -1181,17 +1221,17 @@ def send():
         
         # Get attachments
         attachments = request.files.getlist("attachments")
-
+ 
         file = request.files.get("file")
         if not file or not file.filename:
             flash("✗ Please upload an Excel file.")
             return redirect(url_for("index"))
-
+ 
         # Validate file extension
         if not file.filename.lower().endswith(('.xlsx', '.xls')):
             flash("✗ Please upload a valid Excel file (.xlsx or .xls).")
             return redirect(url_for("index"))
-
+ 
         try:
             df = pd.read_excel(file)
             
@@ -1208,7 +1248,7 @@ def send():
         except Exception as e:
             flash(f"✗ Error reading Excel file: {str(e)}")
             return redirect(url_for("index"))
-
+ 
         # Create campaign record
         sequence_label = "First Mail" if mail_sequence == "first" else "Follow-up Mail"
         campaign_name = f"{sequence_label} - {mail_type.title()} - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
@@ -1223,18 +1263,18 @@ def send():
         campaign_id = c.lastrowid
         conn.commit()
         conn.close()
-
+ 
         sent_count = 0
         fail_count = 0
         
         for index, row in df.iterrows():
             name = str(row.get("Name", "")).strip()
             email = str(row.get("Email", "")).strip().lower()
-
+ 
             if not name or not email or name in ['nan', 'None', ''] or email in ['nan', 'None', '']:
                 fail_count += 1
                 continue
-
+ 
             # Validate email
             is_valid, validation_error = validate_email_deliverability(email)
             if not is_valid:
@@ -1252,6 +1292,14 @@ def send():
                     sender_name = "Sidharth Chettry"
                 elif "vishwasbs" in sender_email_for_name:
                     sender_name = "Vishwas BS"
+                elif "sonu.kumar" in sender_email_for_name:
+                    sender_name = "Sonu Kumar"
+                elif "bhagyashree" in sender_email_for_name.lower():
+                    sender_name = "Bhagyashree"
+                elif "saket.kumar" in sender_email_for_name:
+                    sender_name = "Saket Kumar"
+                elif "danny.jayaraj" in sender_email_for_name.lower():
+                    sender_name = "Danny Jayaraj"
                 else:
                     sender_name = "GradientMIT Team"
                 
@@ -1263,7 +1311,7 @@ def send():
             else:
                 email_subject = "Default Subject"
                 email_body = f"Hi {name},<br><br>This is a default message."
-
+ 
             try:
                 # Generate tracking ID for all emails (both first and follow-up)
                 tracking_id = str(uuid.uuid4())
@@ -1292,7 +1340,7 @@ def send():
             except Exception as e:
                 fail_count += 1
                 print(f"Failed to send to {email}: {e}")
-
+ 
         # Update campaign status and user activity
         conn = sqlite3.connect('email_campaigns.db')
         c = conn.cursor()
@@ -1314,7 +1362,7 @@ def send():
         conn.close()
         
         track_user_activity("campaign_sent", f"emails: {sent_count}, failed: {fail_count}")
-
+ 
         # Final status message
         if sent_count > 0 and fail_count == 0:
             flash(f"✓ All {sent_count} emails sent successfully!")
@@ -1328,7 +1376,7 @@ def send():
     except Exception as e:
         flash(f"✗ An error occurred: {str(e)}")
         return redirect(url_for("index"))
-
+ 
 @app.route("/templates")
 def template_manager():
     conn = sqlite3.connect('email_campaigns.db')
@@ -1337,7 +1385,7 @@ def template_manager():
     templates = [{'name': row[0], 'subject': row[1], 'body': row[2]} for row in c.fetchall()]
     conn.close()
     return render_template("template_manager.html", templates=templates)
-
+ 
 @app.route("/save_template", methods=["POST"])
 def save_template():
     name = request.form.get("template_name")
@@ -1354,7 +1402,7 @@ def save_template():
         flash(f"Template '{name}' already exists!")
     conn.close()
     return redirect(url_for('template_manager'))
-
+ 
 @app.route("/get_template/<template_name>")
 def get_template(template_name):
     conn = sqlite3.connect('email_campaigns.db')
@@ -1365,7 +1413,7 @@ def get_template(template_name):
     if result:
         return jsonify({'subject': result[0], 'body': result[1]})
     return jsonify({'error': 'Template not found'})
-
+ 
 @app.route("/debug_email_configs")
 def debug_email_configs():
     """Debug route to check email configurations"""
@@ -1378,7 +1426,7 @@ def debug_email_configs():
             'port': config.get('port', 'NOT SET')
         }
     return jsonify(debug_info)
-
+ 
 @app.route("/get_email_accounts")
 def get_email_accounts():
     """Get available email accounts for selection"""
@@ -1408,6 +1456,38 @@ def get_email_accounts():
                 'name': 'Gmail - vishwasbs@gradientmitsolutions.com',
                 'email': EMAIL_CONFIGS['gmail2']['email']
             })
+ 
+        # Gmail account 3
+        if EMAIL_CONFIGS['gmail3']['email'] and EMAIL_CONFIGS['gmail3']['password']:
+            accounts.append({
+                'key': 'gmail3',
+                'name': 'Gmail - sonu.kumar@gradientm.com',
+                'email': EMAIL_CONFIGS['gmail3']['email']
+            })
+ 
+        # Gmail account 4
+        if EMAIL_CONFIGS['gmail4']['email'] and EMAIL_CONFIGS['gmail4']['password']:
+            accounts.append({
+                'key': 'gmail4',
+                'name': 'Gmail - Bhagyashree@gradientm.com',
+                'email': EMAIL_CONFIGS['gmail4']['email']
+            })
+ 
+        # Gmail account 5
+        if EMAIL_CONFIGS['gmail5']['email'] and EMAIL_CONFIGS['gmail5']['password']:
+            accounts.append({
+                'key': 'gmail5',
+                'name': 'Gmail - saket.kumar@gradientm.com',
+                'email': EMAIL_CONFIGS['gmail5']['email']
+            })
+ 
+        # Gmail account 6
+        if EMAIL_CONFIGS['gmail6']['email'] and EMAIL_CONFIGS['gmail6']['password']:
+            accounts.append({
+                'key': 'gmail6',
+                'name': 'Gmail - Danny.jayaraj@gradientm.com',
+                'email': EMAIL_CONFIGS['gmail6']['email']
+            })
         
         print(f"DEBUG: Returning {len(accounts)} email accounts")
         for acc in accounts:
@@ -1417,13 +1497,13 @@ def get_email_accounts():
     except Exception as e:
         print(f"ERROR in get_email_accounts: {e}")
         return jsonify([{'key': 'office365', 'name': 'Default Account', 'email': 'info@gradientmit.com'}])
-
+ 
 @app.route("/analytics")
 def analytics():
     """Main analytics page - redirect to dashboard selector"""
     track_user_activity("page_visit", "analytics")
     return render_template("dashboard_selector.html")
-
+ 
 @app.route("/first-mail-dashboard")
 def first_mail_dashboard():
     conn = sqlite3.connect('email_campaigns.db')
@@ -1484,7 +1564,7 @@ def first_mail_dashboard():
                          total_campaigns=total_campaigns,
                          total_opens=total_opens,
                          recent_emails=recent_emails)
-
+ 
 @app.route("/followup-mail-dashboard")
 def followup_mail_dashboard():
     conn = sqlite3.connect('email_campaigns.db')
@@ -1545,17 +1625,17 @@ def followup_mail_dashboard():
                          total_campaigns=total_campaigns,
                          total_opens=total_opens,
                          recent_emails=recent_emails)
-
+ 
 @app.route("/dashboard")
 def dashboard():
     """Display dashboard selector"""
     return render_template("dashboard_selector.html")
-
+ 
 @app.route("/dashboard_selector")
 def dashboard_selector():
     """Alternative route for dashboard selector"""
     return render_template("dashboard_selector.html")
-
+ 
 @app.route("/email_opens")
 def email_opens():
     """Display all email opens"""
@@ -1575,7 +1655,7 @@ def email_opens():
     conn.close()
     
     return render_template("email_opens.html", opens=opens)
-
+ 
 @app.route("/email_clicks")
 def email_clicks():
     """Display all email clicks"""
@@ -1595,7 +1675,7 @@ def email_clicks():
     conn.close()
     
     return render_template("email_clicks.html", clicks=clicks)
-
+ 
 @app.route("/export_opens")
 def export_opens():
     """Export email opens to Excel"""
@@ -1621,7 +1701,7 @@ def export_opens():
     output.seek(0)
     
     return send_file(output, as_attachment=True, download_name=f'email_opens_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
+ 
 @app.route("/first_mail_opens")
 def first_mail_opens():
     """Display first mail opens only"""
@@ -1642,7 +1722,7 @@ def first_mail_opens():
     conn.close()
     
     return render_template("first_mail_opens.html", opens=opens)
-
+ 
 @app.route("/export_first_opens")
 def export_first_opens():
     """Export first mail opens to Excel"""
@@ -1669,7 +1749,7 @@ def export_first_opens():
     output.seek(0)
     
     return send_file(output, as_attachment=True, download_name=f'first_mail_opens_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
+ 
 @app.route("/followup_mail_opens")
 def followup_mail_opens():
     """Display follow-up mail opens only"""
@@ -1690,9 +1770,9 @@ def followup_mail_opens():
     conn.close()
     
     return render_template("followup_mail_opens.html", opens=opens)
-
-
-
+ 
+ 
+ 
 @app.route("/export_followup_opens")
 def export_followup_opens():
     """Export followup mail opens to Excel"""
@@ -1719,7 +1799,7 @@ def export_followup_opens():
     output.seek(0)
     
     return send_file(output, as_attachment=True, download_name=f'followup_mail_opens_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
+ 
 @app.route("/track/<tracking_id>")
 @app.route("/track/<tracking_id>/<recipient_hash>")
 @app.route("/t/<tracking_id>")
@@ -1845,30 +1925,30 @@ def track_email_open(tracking_id, recipient_hash=None):
     response.headers['Access-Control-Allow-Methods'] = 'GET'
     response.headers['Access-Control-Allow-Headers'] = '*'
     return response
-
+ 
 @app.route("/book")
 def book_meeting():
     """Show booking options page"""
     return render_template("booking.html")
-
+ 
 @app.route("/book-direct")
 def book_direct():
     """Direct redirect to Outlook booking - no login required"""
     # No login check - public route
     return redirect('https://outlook.office.com/bookwithme/user/f64db056498c433e9493872d4736c509@gradientmit.com?anonymous&ismsaljsauthenabled&ep=plink')
-
+ 
 @app.route("/pixel/<tracking_id>")
 @app.route("/pixel/<tracking_id>/<recipient_hash>")
 def track_pixel(tracking_id, recipient_hash=None):
     """Alternative pixel tracking endpoint"""
     return track_email_open(tracking_id, recipient_hash)
-
+ 
 @app.route("/open/<tracking_id>")
 @app.route("/open/<tracking_id>/<recipient_hash>")
 def track_open(tracking_id, recipient_hash=None):
     """Alternative open tracking endpoint"""
     return track_email_open(tracking_id, recipient_hash)
-
+ 
 @app.route("/click/<tracking_id>/<recipient_hash>")
 def track_click_open(tracking_id, recipient_hash):
     """Track email clicks and opens via clickable link and redirect to booking page"""
@@ -1918,7 +1998,7 @@ def track_click_open(tracking_id, recipient_hash):
         print(f"Click tracking error: {e}")
         # Fallback redirect
         return redirect('/book-direct')
-
+ 
 @app.route("/debug_env")
 def debug_env():
     """Debug environment variables"""
@@ -1930,7 +2010,7 @@ def debug_env():
         "password_first_4": SENDER_PASSWORD[:4] if SENDER_PASSWORD else "None",
         "env_file_exists": os.path.exists('.env')
     })
-
+ 
 @app.route("/test_email")
 def test_email():
     """Test route to verify email functionality"""
@@ -1943,7 +2023,7 @@ def test_email():
         return jsonify({"status": "success", "message": f"Test email sent successfully to {test_recipient}"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
+ 
 @app.route("/check_mx")
 def check_mx():
     """Check MX records for the domain"""
@@ -1955,7 +2035,7 @@ def check_mx():
         return jsonify({"domain": domain, "mx_records": mx_list})
     except Exception as e:
         return jsonify({"error": str(e)})
-
+ 
 @app.route("/check_smtp")
 def check_smtp():
     """Check SMTP connection without sending email"""
@@ -1979,7 +2059,7 @@ def check_smtp():
             results.append(f"✗ {config['server']}:{config['port']} - {str(e)}")
     
     return jsonify({"status": "complete", "results": results})
-
+ 
 @app.route("/get_latest_tracking_url")
 def get_latest_tracking_url():
     """Get the tracking URL for the most recent email sent"""
@@ -2015,7 +2095,7 @@ def get_latest_tracking_url():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
+ 
 @app.route("/api/check_opens")
 def check_opens():
     """Check email opens in database - API endpoint"""
@@ -2052,7 +2132,7 @@ def check_opens():
         
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
+ 
 @app.route("/test_tracking/<tracking_id>/<recipient_hash>")
 def test_tracking(tracking_id, recipient_hash):
     """Test tracking URL manually - shows debug info instead of pixel"""
@@ -2105,7 +2185,7 @@ def test_tracking(tracking_id, recipient_hash):
         
     except Exception as e:
         return f"<h2>❌ Error: {str(e)}</h2>"
-
+ 
 @app.route("/test_pixel")
 def test_pixel():
     """Test if tracking pixel is accessible"""
@@ -2118,7 +2198,7 @@ def test_pixel():
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
     return response
-
+ 
 @app.route("/debug_tracking")
 def debug_tracking():
     """Debug tracking system - check recent emails and their tracking status"""
@@ -2167,7 +2247,7 @@ def debug_tracking():
         
     except Exception as e:
         return f"<h2>❌ Error: {str(e)}</h2>"
-
+ 
 @app.route("/force_open/<tracking_id>/<recipient_hash>")
 def force_open(tracking_id, recipient_hash):
     """Force record an email open for testing"""
@@ -2209,9 +2289,9 @@ def force_open(tracking_id, recipient_hash):
         
     except Exception as e:
         return f"<h2>❌ Error: {str(e)}</h2>"
-
-
-
+ 
+ 
+ 
 @app.route("/test_latest_email")
 def test_latest_email():
     """Test the tracking for the most recent email sent"""
@@ -2273,11 +2353,11 @@ def test_latest_email():
         
     except Exception as e:
         return f"<h2>❌ Error: {str(e)}</h2>"
-
-
-
-
-
+ 
+ 
+ 
+ 
+ 
 def log_email_open_to_file(recipient_email, timestamp):
     """Log email open to text file with notification"""
     try:
@@ -2287,7 +2367,7 @@ def log_email_open_to_file(recipient_email, timestamp):
         print(f"📝 Logged to file: {recipient_email} opened email at {timestamp}")
     except Exception as e:
         print(f"❌ Error writing to log file: {e}")
-
+ 
 # --- Run App ---
 if __name__ == "__main__":
     try:
@@ -2316,3 +2396,4 @@ if __name__ == "__main__":
         print("\nApp stopped")
     except Exception as e:
         print(f"Error: {e}")
+ 
