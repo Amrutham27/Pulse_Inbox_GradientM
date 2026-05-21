@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_file, session
 from io import BytesIO
 import pandas as pd
@@ -385,36 +386,36 @@ EMAIL_CONFIGS = {
         'name': 'Gmail - vishwasbs@gradientmitsolutions.com',
         'tls': True
     },
-    'gmail3': {
-        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
-        'port': int(os.getenv('GMAIL_PORT', 587)),
-        'email': os.getenv('GMAIL_USER_3'),
-        'password': os.getenv('GMAIL_PASS_3'),
-        'name': 'Gmail - sonu.kumar@gradientm.com',
+    'outlook2': {
+        'server': os.getenv('OUTLOOK_HOST', 'smtp.office365.com'),
+        'port': int(os.getenv('OUTLOOK_PORT', 587)),
+        'email': os.getenv('OUTLOOK_USER_2'),
+        'password': os.getenv('OUTLOOK_PASS_2'),
+        'name': 'Outlook - sonu.kumar@gradientm.com',
         'tls': True
     },
-    'gmail4': {
-        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
-        'port': int(os.getenv('GMAIL_PORT', 587)),
-        'email': os.getenv('GMAIL_USER_4'),
-        'password': os.getenv('GMAIL_PASS_4'),
-        'name': 'Gmail - Bhagyashree@gradientm.com',
+    'outlook3': {
+        'server': os.getenv('OUTLOOK_HOST', 'smtp.office365.com'),
+        'port': int(os.getenv('OUTLOOK_PORT', 587)),
+        'email': os.getenv('OUTLOOK_USER_3'),
+        'password': os.getenv('OUTLOOK_PASS_3'),
+        'name': 'Outlook - Bhagyashree@gradientm.com',
         'tls': True
     },
-    'gmail5': {
-        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
-        'port': int(os.getenv('GMAIL_PORT', 587)),
-        'email': os.getenv('GMAIL_USER_5'),
-        'password': os.getenv('GMAIL_PASS_5'),
-        'name': 'Gmail - saket.kumar@gradientm.com',
+    'outlook4': {
+        'server': os.getenv('OUTLOOK_HOST', 'smtp.office365.com'),
+        'port': int(os.getenv('OUTLOOK_PORT', 587)),
+        'email': os.getenv('OUTLOOK_USER_4'),
+        'password': os.getenv('OUTLOOK_PASS_4'),
+        'name': 'Outlook - saket.kumar@gradientm.com',
         'tls': True
     },
-    'gmail6': {
-        'server': os.getenv('GMAIL_HOST', 'smtp.gmail.com'),
-        'port': int(os.getenv('GMAIL_PORT', 587)),
-        'email': os.getenv('GMAIL_USER_6'),
-        'password': os.getenv('GMAIL_PASS_6'),
-        'name': 'Gmail - Danny.jayaraj@gradientm.com',
+    'outlook5': {
+        'server': os.getenv('OUTLOOK_HOST', 'smtp.office365.com'),
+        'port': int(os.getenv('OUTLOOK_PORT', 587)),
+        'email': os.getenv('OUTLOOK_USER_5'),
+        'password': os.getenv('OUTLOOK_PASS_5'),
+        'name': 'Outlook - Danny.jayaraj@gradientm.com',
         'tls': True
     }
 }
@@ -1457,36 +1458,36 @@ def get_email_accounts():
                 'email': EMAIL_CONFIGS['gmail2']['email']
             })
  
-        # Gmail account 3
-        if EMAIL_CONFIGS['gmail3']['email'] and EMAIL_CONFIGS['gmail3']['password']:
+        # Outlook account 2 (Sonu)
+        if EMAIL_CONFIGS['outlook2']['email'] and EMAIL_CONFIGS['outlook2']['password']:
             accounts.append({
-                'key': 'gmail3',
-                'name': 'Gmail - sonu.kumar@gradientm.com',
-                'email': EMAIL_CONFIGS['gmail3']['email']
+                'key': 'outlook2',
+                'name': 'Outlook - sonu.kumar@gradientm.com',
+                'email': EMAIL_CONFIGS['outlook2']['email']
             })
  
-        # Gmail account 4
-        if EMAIL_CONFIGS['gmail4']['email'] and EMAIL_CONFIGS['gmail4']['password']:
+        # Outlook account 3 (Bhagyashree)
+        if EMAIL_CONFIGS['outlook3']['email'] and EMAIL_CONFIGS['outlook3']['password']:
             accounts.append({
-                'key': 'gmail4',
-                'name': 'Gmail - Bhagyashree@gradientm.com',
-                'email': EMAIL_CONFIGS['gmail4']['email']
+                'key': 'outlook3',
+                'name': 'Outlook - Bhagyashree@gradientm.com',
+                'email': EMAIL_CONFIGS['outlook3']['email']
             })
  
-        # Gmail account 5
-        if EMAIL_CONFIGS['gmail5']['email'] and EMAIL_CONFIGS['gmail5']['password']:
+        # Outlook account 4 (Saket)
+        if EMAIL_CONFIGS['outlook4']['email'] and EMAIL_CONFIGS['outlook4']['password']:
             accounts.append({
-                'key': 'gmail5',
-                'name': 'Gmail - saket.kumar@gradientm.com',
-                'email': EMAIL_CONFIGS['gmail5']['email']
+                'key': 'outlook4',
+                'name': 'Outlook - saket.kumar@gradientm.com',
+                'email': EMAIL_CONFIGS['outlook4']['email']
             })
  
-        # Gmail account 6
-        if EMAIL_CONFIGS['gmail6']['email'] and EMAIL_CONFIGS['gmail6']['password']:
+        # Outlook account 5 (Danny)
+        if EMAIL_CONFIGS['outlook5']['email'] and EMAIL_CONFIGS['outlook5']['password']:
             accounts.append({
-                'key': 'gmail6',
-                'name': 'Gmail - Danny.jayaraj@gradientm.com',
-                'email': EMAIL_CONFIGS['gmail6']['email']
+                'key': 'outlook5',
+                'name': 'Outlook - Danny.jayaraj@gradientm.com',
+                'email': EMAIL_CONFIGS['outlook5']['email']
             })
         
         print(f"DEBUG: Returning {len(accounts)} email accounts")
