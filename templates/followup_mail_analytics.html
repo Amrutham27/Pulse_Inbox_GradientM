@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 Follow-up Mail Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: radial-gradient(circle at 20% 80%, #667eea 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, #764ba2 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, #f093fb 0%, transparent 50%);
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+        }
+        .card {
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: none;
+            margin-bottom: 2rem;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        .table th {
+            background-color: #f8f9fa;
+            border: none;
+            font-weight: 600;
+        }
+        .badge-success { background-color: #28a745; }
+        .badge-danger { background-color: #dc3545; }
+        .badge-info { background-color: #17a2b8; }
+        .main-heading {
+            color: #2d3748 !important;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: rgba(255,255,255,0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .company-logo {
+            height: 60px;
+            width: auto;
+            margin-right: 15px;
+        }
+        .header-content {
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="header-content">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Company Logo" class="company-logo">
+                <h1 class="main-heading">📈 Follow-up Mail Analytics Dashboard</h1>
+            </div>
+            <div class="d-flex flex-column gap-2">
+                <!-- Action Buttons -->
+
+                <!-- Navigation Buttons -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('followup_mail_opens') }}" class="btn btn-info">
+                        <i class="bi bi-eye"></i> View Opens
+                    </a>
+
+                    <a href="{{ url_for('first_mail_dashboard') }}" class="btn btn-light">
+                        <i class="bi bi-envelope"></i> First Mail Dashboard
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+                        <i class="bi bi-house"></i> Home
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ total_campaigns }}</div>
+                    <div>Follow-up Campaigns</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ total_sent }}</div>
+                    <div>Emails Sent</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ total_failed }}</div>
+                    <div>Failed Emails</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ total_opens }}</div>
+                    <div>Email Opens</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card stats-card">
+                    <div class="stats-number">{{ '%.1f'|format((total_opens / total_sent * 100) if total_sent > 0 else 0) }}%</div>
+                    <div>Open Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Campaigns Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Follow-up Mail Campaigns</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Campaign Name</th>
+                                <th>Status</th>
+                                <th>Total Emails</th>
+                                <th>Sent</th>
+                                <th>Failed</th>
+                                <th>Opens</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for campaign in campaigns %}
+                            <tr>
+                                <td>{{ campaign[1] }}</td>
+                                <td>
+                                    <span class="badge {% if campaign[2] == 'completed' %}badge-success{% else %}badge-warning{% endif %}">
+                                        {{ campaign[2].title() }}
+                                    </span>
+                                </td>
+                                <td>{{ campaign[3] }}</td>
+                                <td>{{ campaign[4] }}</td>
+                                <td>{{ campaign[5] }}</td>
+                                <td>{{ campaign[6] }}</td>
+                                <td>{{ campaign[7][:10] if campaign[7] else 'N/A' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No follow-up campaigns found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+    
+
+</body>
+</html>
